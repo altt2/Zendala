@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { LogOut, CheckCircle, XCircle, Camera, Keyboard, ArrowLeft } from "lucide-react";
 import { Html5QrcodeScanner } from "html5-qrcode";
-import logoUrl from "@assets/generated_images/zendala_residential_community_logo.png";
+import logoUrl from "@assets/images_1763955668403.png";
 
 interface QrValidationResult {
   valid: boolean;

@@ -17,7 +17,7 @@ import {
   CheckCircle,
   Activity
 } from "lucide-react";
-import logoUrl from "@assets/generated_images/zendala_residential_community_logo.png";
+import logoUrl from "@assets/images_1763955668403.png";
 
 interface AccessLogWithDetails {
   id: string;

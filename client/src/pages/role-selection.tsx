@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/generated_images/zendala_residential_community_logo.png";
+import logoUrl from "@assets/images_1763955668403.png";
 
 export default function RoleSelection() {
   const { user } = useAuth();

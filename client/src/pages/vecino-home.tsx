@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LogOut, Plus, QrCode as QrCodeIcon, Copy, Check, ArrowLeft } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { QrCode } from "@shared/schema";
-import logoUrl from "@assets/generated_images/zendala_residential_community_logo.png";
+import logoUrl from "@assets/images_1763955668403.png";
 
 export default function VecinoHome() {
   const { toast } = useToast();

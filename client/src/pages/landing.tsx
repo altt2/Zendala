@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Shield, QrCode, Users } from "lucide-react";
-import logoUrl from "@assets/generated_images/zendala_residential_community_logo.png";
+import logoUrl from "@assets/images_1763955668403.png";
 
 export default function Landing() {
   return (
