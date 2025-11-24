@@ -4,7 +4,7 @@ import { Shield, QrCode, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useState } from "react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/generated_images/zendala_residential_community_logo.png";
 
@@ -42,6 +42,9 @@ export default function RoleSelection() {
 
     try {
       await apiRequest("POST", "/api/auth/set-role", { role: roleId });
+      
+      // Invalidate and refetch user data to update role
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
         title: "Rol establecido",
