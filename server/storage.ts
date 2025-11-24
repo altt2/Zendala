@@ -16,6 +16,7 @@ import { randomUUID } from "crypto";
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserRole(userId: string, role: string): Promise<User>;
   createQrCode(qrCode: InsertQrCode): Promise<QrCode>;
   getQrCodesByUser(userId: string): Promise<QrCode[]>;
   getQrCodeByCode(code: string): Promise<QrCode | undefined>;
@@ -42,6 +43,15 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
         },
       })
+      .returning();
+    return user;
+  }
+
+  async updateUserRole(userId: string, role: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, userId))
       .returning();
     return user;
   }

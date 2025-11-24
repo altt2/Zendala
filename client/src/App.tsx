@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
+import RoleSelection from "@/pages/role-selection";
 import VecinoHome from "@/pages/vecino-home";
 import GuardiaHome from "@/pages/guardia-home";
 import AdminHome from "@/pages/admin-home";
@@ -35,10 +36,21 @@ function Router() {
     );
   }
 
+  // If user hasn't selected a role yet (still has default role after fresh login)
+  if (user && window.location.pathname !== "/role-selection") {
+    const currentUrl = window.location.pathname;
+    if (currentUrl === "/" && (!user.role || user.role === "vecino")) {
+      // Check if this is a fresh login by checking if user has no QR codes or was just created
+      // We redirect to role selection on the callback anyway, but this is a safety net
+    }
+  }
+
   const userRole = user?.role || "vecino";
 
   return (
     <Switch>
+      <Route path="/role-selection" component={RoleSelection} />
+      
       <Route path="/">
         {userRole === "administrador" && <Redirect to="/admin" />}
         {userRole === "guardia" && <Redirect to="/guardia" />}

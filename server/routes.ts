@@ -47,6 +47,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/auth/set-role', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { role } = req.body;
+
+      if (!role || !["vecino", "guardia", "administrador"].includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+
+      const user = await storage.updateUserRole(userId, role);
+      res.json(user);
+    } catch (error) {
+      console.error("Error setting user role:", error);
+      res.status(500).json({ message: "Failed to set user role" });
+    }
+  });
+
   app.post("/api/qr-codes", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
