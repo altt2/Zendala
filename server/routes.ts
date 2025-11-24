@@ -111,20 +111,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/qr-codes/validate", isAuthenticated, isGuardOrAdmin, async (req: any, res) => {
     try {
-      const { code } = req.body;
+      let { code } = req.body;
       
       if (!code) {
         return res.status(400).json({ message: "Code is required" });
       }
 
+      // Clean up the code: trim whitespace and normalize
+      code = String(code).trim();
+      console.log(`[QR Validation] Searching for code: "${code}"`);
+
       const qrCode = await storage.getQrCodeByCode(code);
 
       if (!qrCode) {
+        console.log(`[QR Validation] Code not found: "${code}"`);
         return res.json({
           valid: false,
           message: "Código QR no encontrado",
         });
       }
+
+      console.log(`[QR Validation] Code found: ${qrCode.id}, isUsed: ${qrCode.isUsed}`);
 
       if (qrCode.isUsed === "true") {
         return res.json({

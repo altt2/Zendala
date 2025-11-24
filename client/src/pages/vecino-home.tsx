@@ -281,14 +281,16 @@ export default function VecinoHome() {
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-muted-foreground">Código</p>
+                  <p className="text-sm text-muted-foreground mb-2">Código para el Guardia</p>
                   <div className="flex items-center gap-2">
-                    <code className="text-xs bg-muted p-2 rounded flex-1 overflow-auto font-mono break-all" data-testid="text-qr-code">
-                      {selectedQr.code}
-                    </code>
+                    <Input 
+                      readOnly
+                      value={selectedQr.code}
+                      data-testid="input-qr-code"
+                      className="text-xs font-mono"
+                    />
                     <Button 
                       size="icon" 
-                      variant="outline"
                       onClick={handleCopyCode}
                       data-testid="button-copy-code"
                       className="flex-shrink-0"
