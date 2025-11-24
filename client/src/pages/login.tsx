@@ -48,16 +48,33 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // Store selected role in localStorage for after auth
+      // Try local login first
+      const response = await fetch("/api/login-local", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Authentication failed");
+      }
+
+      // Store selected role for after login
       localStorage.setItem("pendingRole", role);
 
-      // Redirect to Replit login
-      window.location.href = "/api/login";
-    } catch (error) {
+      // Redirect to app
+      window.location.href = "/role-selection";
+    } catch (error: any) {
       console.error("Login error:", error);
       toast({
         title: "Error",
-        description: "Ocurrió un error al intentar iniciar sesión",
+        description: error.message || "Ocurrió un error al intentar iniciar sesión",
         variant: "destructive",
       });
       setIsLoading(false);

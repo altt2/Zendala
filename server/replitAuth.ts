@@ -1,5 +1,7 @@
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
+import LocalStrategy from "passport-local";
+import { createHash } from "crypto";
 
 import passport from "passport";
 import session from "express-session";
@@ -70,6 +72,38 @@ export async function setupAuth(app: Express) {
 
   const config = await getOidcConfig();
 
+  // Local strategy for username/password authentication
+  passport.use(
+    new LocalStrategy.Strategy(
+      {
+        usernameField: "username",
+        passwordField: "password",
+      },
+      async (username, password, done) => {
+        try {
+          const user = await storage.getUserByUsername(username);
+          if (!user) {
+            return done(null, false, { message: "Usuario no encontrado" });
+          }
+
+          if (!user.passwordHash) {
+            return done(null, false, { message: "Usuario no válido" });
+          }
+
+          // Hash the provided password and compare
+          const passwordHash = createHash("sha256").update(password).digest("hex");
+          if (passwordHash !== user.passwordHash) {
+            return done(null, false, { message: "Contraseña incorrecta" });
+          }
+
+          return done(null, { id: user.id, username: user.username, role: user.role });
+        } catch (error) {
+          return done(error);
+        }
+      }
+    )
+  );
+
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
@@ -99,8 +133,35 @@ export async function setupAuth(app: Express) {
     }
   };
 
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+  passport.serializeUser((user: any, cb) => {
+    cb(null, user);
+  });
+  passport.deserializeUser((user: any, cb) => {
+    cb(null, user);
+  });
+
+  // Local login endpoint
+  app.post("/api/login-local", (req, res, next) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        return res.status(500).json({ message: "Error during authentication" });
+      }
+      if (!user) {
+        return res.status(401).json({ message: info?.message || "Authentication failed" });
+      }
+
+      req.logIn(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error logging in" });
+        }
+        res.json({
+          id: user.id,
+          username: user.username,
+          role: user.role,
+        });
+      });
+    })(req, res, next);
+  });
 
   app.get("/api/login", (req, res, next) => {
     ensureStrategy(req.hostname);

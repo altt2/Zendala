@@ -52,7 +52,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Support both OIDC (claims.sub) and local auth (id)
+      const userId = req.user.claims?.sub || req.user.id;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -63,7 +64,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/set-role', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Support both OIDC (claims.sub) and local auth (id)
+      const userId = req.user.claims?.sub || req.user.id;
       const { role } = req.body;
 
       if (!role || !["vecino", "guardia", "administrador"].includes(role)) {
@@ -80,7 +82,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/qr-codes", isAuthenticated, isVecinoOrAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Support both OIDC (claims.sub) and local auth (id)
+      const userId = req.user.claims?.sub || req.user.id;
       const validatedData = insertQrCodeSchema.parse(req.body);
       
       const qrCode = await storage.createQrCode({
@@ -102,7 +105,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/qr-codes", isAuthenticated, isVecinoOrAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Support both OIDC (claims.sub) and local auth (id)
+      const userId = req.user.claims?.sub || req.user.id;
       const qrCodes = await storage.getQrCodesByUser(userId);
       res.json(qrCodes);
     } catch (error) {
@@ -166,7 +170,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/access-logs", isAuthenticated, isGuardOrAdmin, async (req: any, res) => {
     try {
-      const guardId = req.user.claims.sub;
+      // Support both OIDC (claims.sub) and local auth (id)
+      const guardId = req.user.claims?.sub || req.user.id;
       const { qrCodeId, accessType, vehiclePlates, notes } = req.body;
 
       if (!qrCodeId) {
