@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Plus, QrCode as QrCodeIcon } from "lucide-react";
+import { LogOut, Plus, QrCode as QrCodeIcon, Copy, Check } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { QrCode } from "@shared/schema";
 import logoUrl from "@assets/generated_images/zendala_residential_community_logo.png";
@@ -25,6 +25,7 @@ export default function VecinoHome() {
   const [visitorType, setVisitorType] = useState("");
   const [description, setDescription] = useState("");
   const [selectedQr, setSelectedQr] = useState<QrCode | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
 
 
   const { data: qrCodes, isLoading: codesLoading } = useQuery<QrCode[]>({
@@ -78,6 +79,18 @@ export default function VecinoHome() {
       return;
     }
     createQrMutation.mutate({ visitorName, visitorType, description });
+  };
+
+  const handleCopyCode = () => {
+    if (selectedQr?.code) {
+      navigator.clipboard.writeText(selectedQr.code);
+      setCopiedCode(true);
+      toast({
+        title: "Código copiado",
+        description: "El código QR ha sido copiado al portapapeles",
+      });
+      setTimeout(() => setCopiedCode(false), 2000);
+    }
   };
 
   const getStatusBadge = (qr: QrCode) => {
@@ -267,6 +280,27 @@ export default function VecinoHome() {
                     <p className="text-base" data-testid="text-qr-description">{selectedQr.description}</p>
                   </div>
                 )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Código</p>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs bg-muted p-2 rounded flex-1 overflow-auto font-mono break-all" data-testid="text-qr-code">
+                      {selectedQr.code}
+                    </code>
+                    <Button 
+                      size="icon" 
+                      variant="outline"
+                      onClick={handleCopyCode}
+                      data-testid="button-copy-code"
+                      className="flex-shrink-0"
+                    >
+                      {copiedCode ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Creado</p>
                   <p className="text-sm font-mono">
