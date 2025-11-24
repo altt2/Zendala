@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Plus, QrCode as QrCodeIcon, Copy, Check } from "lucide-react";
+import { LogOut, Plus, QrCode as QrCodeIcon, Copy, Check, ArrowLeft } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { QrCode } from "@shared/schema";
 import logoUrl from "@assets/generated_images/zendala_residential_community_logo.png";
@@ -21,6 +22,7 @@ import logoUrl from "@assets/generated_images/zendala_residential_community_logo
 export default function VecinoHome() {
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
   const [visitorName, setVisitorName] = useState("");
   const [visitorType, setVisitorType] = useState("");
   const [description, setDescription] = useState("");
@@ -141,14 +143,26 @@ export default function VecinoHome() {
               </p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = "/api/logout"}
-            data-testid="button-logout"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Salir
-          </Button>
+          <div className="flex gap-2">
+            {user?.role === "administrador" && (
+              <Button 
+                variant="outline" 
+                onClick={() => setLocation("/admin")}
+                data-testid="button-back-to-panel"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver al Panel
+              </Button>
+            )}
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = "/api/logout"}
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
+          </div>
         </div>
       </header>
 

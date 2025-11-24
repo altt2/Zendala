@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -18,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LogOut, CheckCircle, XCircle, Camera, Keyboard } from "lucide-react";
+import { LogOut, CheckCircle, XCircle, Camera, Keyboard, ArrowLeft } from "lucide-react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import logoUrl from "@assets/generated_images/zendala_residential_community_logo.png";
 
@@ -41,6 +42,7 @@ interface QrValidationResult {
 export default function GuardiaHome() {
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
   const [scanning, setScanning] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [manualCode, setManualCode] = useState("");
@@ -312,14 +314,26 @@ export default function GuardiaHome() {
               </p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = "/api/logout"}
-            data-testid="button-logout"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Salir
-          </Button>
+          <div className="flex gap-2">
+            {user?.role === "administrador" && (
+              <Button 
+                variant="outline" 
+                onClick={() => setLocation("/admin")}
+                data-testid="button-back-to-panel"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver al Panel
+              </Button>
+            )}
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = "/api/logout"}
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
+          </div>
         </div>
       </header>
 
