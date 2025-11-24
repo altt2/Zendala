@@ -122,28 +122,54 @@ export default function GuardiaHome() {
       try {
         const html5QrcodeScanner = new Html5QrcodeScanner(
           "qr-reader",
-          { fps: 10, qrbox: { width: 250, height: 250 } },
+          { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+            disableFlip: false
+          },
           false
         );
 
         html5QrcodeScanner.render(
           (decodedText) => {
+            console.log("QR code detected:", decodedText);
             validateQrMutation.mutate(decodedText);
           },
           (error) => {
-            console.log("QR scan error:", error);
+            // Silently ignore scanning errors
+            console.debug("QR scan error:", error);
           }
         );
 
         setScanner(html5QrcodeScanner);
+        console.log("Scanner initialized successfully");
       } catch (error) {
         console.error("Failed to initialize scanner:", error);
         setScanning(false);
-        toast({
-          title: "Error",
-          description: "No se pudo inicializar la cámara",
-          variant: "destructive",
-        });
+        
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        
+        // Check if it's a permission error
+        if (errorMsg.includes("Permission denied") || errorMsg.includes("NotAllowedError")) {
+          toast({
+            title: "Permiso de cámara denegado",
+            description: "Por favor, permite acceso a la cámara en la configuración del navegador",
+            variant: "destructive",
+          });
+        } else if (errorMsg.includes("NotFoundError")) {
+          toast({
+            title: "Cámara no encontrada",
+            description: "Este dispositivo no tiene cámara disponible",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "No se pudo inicializar el escáner de QR",
+            variant: "destructive",
+          });
+        }
       }
     }, 100);
 
@@ -275,7 +301,12 @@ export default function GuardiaHome() {
               </Button>
             </CardHeader>
             <CardContent>
-              <div id="qr-reader" className="w-full" data-testid="qr-reader-container"></div>
+              <div 
+                id="qr-reader" 
+                className="w-full" 
+                style={{ minHeight: "400px" }}
+                data-testid="qr-reader-container"
+              />
             </CardContent>
           </Card>
         )}
