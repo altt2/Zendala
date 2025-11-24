@@ -109,6 +109,7 @@ export class DatabaseStorage implements IStorage {
         guard: {
           firstName: users.firstName,
           lastName: users.lastName,
+          role: users.role,
         },
       })
       .from(accessLogs)

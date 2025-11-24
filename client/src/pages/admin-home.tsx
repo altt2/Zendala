@@ -37,6 +37,7 @@ interface AccessLogWithDetails {
   guard: {
     firstName: string;
     lastName: string;
+    role?: string;
   };
 }
 
@@ -313,9 +314,12 @@ export default function AdminHome() {
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground">Guardia</p>
-                            <p className="text-sm" data-testid={`text-log-guard-${log.id}`}>
+                            <p className="text-xs text-muted-foreground">Procesado por</p>
+                            <p className="text-sm font-semibold" data-testid={`text-log-guard-${log.id}`}>
                               {log.guard.firstName} {log.guard.lastName}
+                            </p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {log.guard.role === "administrador" ? "Administrador" : log.guard.role === "guardia" ? "Guardia" : "Usuario"}
                             </p>
                           </div>
                         </div>
