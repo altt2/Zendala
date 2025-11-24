@@ -35,7 +35,8 @@ export default function VecinoHome() {
 
   const createQrMutation = useMutation({
     mutationFn: async (data: { visitorName: string; visitorType: string; description?: string }) => {
-      return await apiRequest("POST", "/api/qr-codes", data);
+      const res = await apiRequest("POST", "/api/qr-codes", data);
+      return await res.json();
     },
     onSuccess: (data) => {
       console.log("[Create QR Success] Full data received:", data);

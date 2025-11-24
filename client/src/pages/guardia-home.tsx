@@ -42,7 +42,8 @@ export default function GuardiaHome() {
 
   const validateQrMutation = useMutation({
     mutationFn: async (code: string) => {
-      return await apiRequest("POST", "/api/qr-codes/validate", { code });
+      const res = await apiRequest("POST", "/api/qr-codes/validate", { code });
+      return await res.json();
     },
     onSuccess: (data: QrValidationResult) => {
       setValidationResult(data);
@@ -74,7 +75,8 @@ export default function GuardiaHome() {
 
   const grantAccessMutation = useMutation({
     mutationFn: async (qrCodeId: string) => {
-      return await apiRequest("POST", "/api/access-logs", { qrCodeId });
+      const res = await apiRequest("POST", "/api/access-logs", { qrCodeId });
+      return await res.json();
     },
     onSuccess: () => {
       toast({
