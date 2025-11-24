@@ -88,6 +88,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdById: userId,
       });
 
+      console.log(`[QR Code Create] Generated code: ${qrCode.code}, ID: ${qrCode.id}`);
+      console.log(`[QR Code Create] Full response:`, JSON.stringify(qrCode));
       res.json(qrCode);
     } catch (error: any) {
       console.error("Error creating QR code:", error);

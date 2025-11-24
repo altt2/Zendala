@@ -38,6 +38,9 @@ export default function VecinoHome() {
       return await apiRequest("POST", "/api/qr-codes", data);
     },
     onSuccess: (data) => {
+      console.log("[Create QR Success] Full data received:", data);
+      console.log("[Create QR Success] Code field:", data?.code);
+      console.log("[Create QR Success] ID field:", data?.id);
       queryClient.invalidateQueries({ queryKey: ["/api/qr-codes"] });
       setSelectedQr(data);
       setVisitorName("");
