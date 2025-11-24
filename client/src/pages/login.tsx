@@ -1,0 +1,150 @@
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import logoUrl from "@assets/images_1763955668403.png";
+
+export default function Login() {
+  const { toast } = useToast();
+  const [role, setRole] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate form
+    if (!role) {
+      toast({
+        title: "Error",
+        description: "Por favor selecciona un rol",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!username.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa tu usuario",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!password) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa tu contraseña",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Store selected role in localStorage for after auth
+      localStorage.setItem("pendingRole", role);
+
+      // Redirect to Replit login
+      window.location.href = "/api/login";
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al intentar iniciar sesión",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-8">
+        <div className="space-y-8">
+          {/* Logo */}
+          <div className="flex justify-center">
+            <img src={logoUrl} alt="Zendala" className="h-32 w-32 object-contain" data-testid="img-logo" />
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-6">
+            {/* Role Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="role" className="text-sm font-medium">
+                Selecciona tu rol
+              </Label>
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger id="role" data-testid="select-role">
+                  <SelectValue placeholder="Elige tu perfil" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vecino" data-testid="option-vecino">
+                    Vecino
+                  </SelectItem>
+                  <SelectItem value="guardia" data-testid="option-guardia">
+                    Guardia
+                  </SelectItem>
+                  <SelectItem value="administrador" data-testid="option-administrador">
+                    Administrador
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Username */}
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-sm font-medium">
+                Usuario
+              </Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Ingresa tu usuario"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={isLoading}
+                data-testid="input-username"
+                className="focus-visible:ring-primary"
+              />
+            </div>
+
+            {/* Password */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium">
+                Contraseña
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Ingresa tu contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                data-testid="input-password"
+                className="focus-visible:ring-primary"
+              />
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+              size="lg"
+              data-testid="button-login"
+            >
+              {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+            </Button>
+          </form>
+        </div>
+      </Card>
+    </div>
+  );
+}

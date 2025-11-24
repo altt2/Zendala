@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Shield, QrCode, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/images_1763955668403.png";
@@ -14,6 +14,14 @@ export default function RoleSelection() {
   const { toast } = useToast();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Auto-set role from pending login
+  useEffect(() => {
+    const pendingRole = localStorage.getItem("pendingRole");
+    if (pendingRole && !isLoading) {
+      handleSelectRole(pendingRole);
+    }
+  }, []);
 
   const roles = [
     {
@@ -45,6 +53,9 @@ export default function RoleSelection() {
       
       // Invalidate ALL queries to clear cache when role changes
       await queryClient.invalidateQueries();
+      
+      // Clean up pending role from localStorage
+      localStorage.removeItem("pendingRole");
       
       toast({
         title: "Rol establecido",

@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import Landing from "@/pages/landing";
+import Login from "@/pages/login";
 import RoleSelection from "@/pages/role-selection";
 import VecinoHome from "@/pages/vecino-home";
 import GuardiaHome from "@/pages/guardia-home";
@@ -28,7 +28,7 @@ function Router() {
   if (!isAuthenticated) {
     return (
       <Switch>
-        <Route path="/" component={Landing} />
+        <Route path="/" component={Login} />
         <Route path="*">
           <Redirect to="/" />
         </Route>
