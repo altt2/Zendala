@@ -65,11 +65,8 @@ export default function Login() {
         throw new Error(data.message || "Authentication failed");
       }
 
-      // Store selected role for after login
-      localStorage.setItem("pendingRole", role);
-
-      // Redirect to app
-      window.location.href = "/role-selection";
+      // Redirect to home page - app will handle role-based routing
+      window.location.href = "/";
     } catch (error: any) {
       console.error("Login error:", error);
       toast({

@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Login from "@/pages/login";
 import CrearUsuario from "@/pages/crear-usuario";
-import RoleSelection from "@/pages/role-selection";
 import VecinoHome from "@/pages/vecino-home";
 import GuardiaHome from "@/pages/guardia-home";
 import AdminHome from "@/pages/admin-home";
@@ -51,8 +50,6 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/role-selection" component={RoleSelection} />
-      
       <Route path="/">
         {userRole === "administrador" && <Redirect to="/admin" />}
         {userRole === "guardia" && <Redirect to="/guardia" />}
