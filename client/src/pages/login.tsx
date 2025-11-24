@@ -2,14 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/images_1763955668403.png";
 
 export default function Login() {
   const { toast } = useToast();
-  const [role, setRole] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -18,15 +16,6 @@ export default function Login() {
     e.preventDefault();
     
     // Validate form
-    if (!role) {
-      toast({
-        title: "Error",
-        description: "Por favor selecciona un rol",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!username.trim()) {
       toast({
         title: "Error",
@@ -89,29 +78,6 @@ export default function Login() {
 
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-6">
-            {/* Role Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="role" className="text-sm font-medium">
-                Selecciona tu rol
-              </Label>
-              <Select value={role} onValueChange={setRole}>
-                <SelectTrigger id="role" data-testid="select-role">
-                  <SelectValue placeholder="Elige tu perfil" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vecino" data-testid="option-vecino">
-                    Vecino
-                  </SelectItem>
-                  <SelectItem value="guardia" data-testid="option-guardia">
-                    Guardia
-                  </SelectItem>
-                  <SelectItem value="administrador" data-testid="option-administrador">
-                    Administrador
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Username */}
             <div className="space-y-2">
               <Label htmlFor="username" className="text-sm font-medium">
