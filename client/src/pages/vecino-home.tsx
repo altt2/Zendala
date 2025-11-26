@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Plus, QrCode as QrCodeIcon, Copy, Check, ArrowLeft, MessageCircle } from "lucide-react";
+import { LogOut, Plus, QrCode as QrCodeIcon, Copy, Check, ArrowLeft, Download } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { QrCode } from "@shared/schema";
 import logoUrl from "@assets/images_1763955668403.png";
@@ -116,20 +116,17 @@ export default function VecinoHome() {
     });
   };
 
-  const handleShareWhatsApp = async () => {
-    if (!selectedQr?.accessPassword || !selectedQr?.code) {
+  const handleDownloadQR = async () => {
+    if (!selectedQr?.code) {
       toast({
         title: "Error",
-        description: "No hay contraseña disponible",
+        description: "No hay código QR disponible",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      const message = `Hola, aquí está la contraseña de acceso para ${selectedQr.visitorName}:\n\n${selectedQr.accessPassword}\n\nPresentala en la caseta de seguridad.`;
-
-      // Generar imagen PNG del QR
       const qrImageUrl = await QRCode.toDataURL(selectedQr.code, {
         errorCorrectionLevel: 'H',
         type: 'image/png',
@@ -141,33 +138,6 @@ export default function VecinoHome() {
         }
       });
 
-      // Convertir Data URL a Blob
-      const response = await fetch(qrImageUrl);
-      const blob = await response.blob();
-      const file = new File([blob], `codigo-qr-${selectedQr.visitorName}.png`, { type: 'image/png' });
-
-      // Intentar compartir con Web Share API
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: 'Código QR de Acceso',
-            text: message,
-            files: [file],
-          });
-          toast({
-            title: "¡Compartido!",
-            description: "La imagen y el mensaje se enviaron a WhatsApp.",
-          });
-          return;
-        } catch (error: any) {
-          if (error.name === 'AbortError') {
-            return; // Usuario canceló
-          }
-          console.log('Share API error, usando fallback:', error);
-        }
-      }
-
-      // Fallback: descargar imagen y abrir WhatsApp
       const link = document.createElement('a');
       link.href = qrImageUrl;
       link.download = `codigo-qr-${selectedQr.visitorName}.png`;
@@ -176,19 +146,14 @@ export default function VecinoHome() {
       document.body.removeChild(link);
 
       toast({
-        title: "Imagen descargada",
-        description: "Abre WhatsApp y adjunta la imagen desde Descargas.",
+        title: "Descargado",
+        description: "Imagen del código QR descargada.",
       });
-
-      setTimeout(() => {
-        window.location.href = `whatsapp://send?text=${encodeURIComponent(message)}`;
-      }, 500);
-
     } catch (error) {
-      console.error("Error al compartir:", error);
+      console.error("Error al descargar:", error);
       toast({
         title: "Error",
-        description: "No se pudo procesar.",
+        description: "No se pudo descargar la imagen.",
         variant: "destructive",
       });
     }
@@ -431,14 +396,14 @@ export default function VecinoHome() {
                           Copiar
                         </Button>
                         <Button
-                          onClick={handleShareWhatsApp}
+                          onClick={handleDownloadQR}
                           variant="outline"
                           className="flex-1"
                           size="sm"
-                          data-testid="button-share-whatsapp"
+                          data-testid="button-download-qr"
                         >
-                          <MessageCircle className="h-4 w-4 mr-2" />
-                          WhatsApp
+                          <Download className="h-4 w-4 mr-2" />
+                          Descargar
                         </Button>
                       </div>
                     </div>
