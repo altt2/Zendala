@@ -115,7 +115,7 @@ export default function VecinoHome() {
     });
   };
 
-  const handleShareWhatsApp = async () => {
+  const handleShareWhatsApp = () => {
     if (!selectedQr?.accessPassword) {
       toast({
         title: "Error",
@@ -125,70 +125,67 @@ export default function VecinoHome() {
       return;
     }
 
-    try {
-      // Capturar el QR como imagen
-      const qrElement = qrRef.current?.querySelector('svg') as SVGElement;
-      if (!qrElement) {
-        throw new Error("No se pudo encontrar el código QR");
-      }
+    const qrElement = qrRef.current?.querySelector('svg') as SVGElement;
+    if (!qrElement) {
+      // Si no hay elemento de referencia, solo compartir texto
+      const message = `Hola, aquí está la contraseña de acceso para ${selectedQr.visitorName}:\n\n${selectedQr.accessPassword}\n\nPresentala en la caseta de seguridad.`;
+      const encodedMessage = encodeURIComponent(message);
+      window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+      return;
+    }
 
-      // Convertir SVG a canvas
+    try {
+      const svgString = new XMLSerializer().serializeToString(qrElement);
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error("No se pudo crear canvas");
 
-      const svg = new XMLSerializer().serializeToString(qrElement);
+      if (!ctx) throw new Error("Canvas context not available");
+
       const img = new Image();
-      const blob = new Blob([svg], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(svgBlob);
 
       img.onload = () => {
         canvas.width = img.width;
         canvas.height = img.height;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(url);
 
-        // Convertir canvas a blob
-        canvas.toBlob(async (qrBlob) => {
+        canvas.toBlob((qrBlob) => {
           if (!qrBlob) return;
 
           const message = `Hola, aquí está la contraseña de acceso para ${selectedQr.visitorName}:\n\n${selectedQr.accessPassword}\n\nPresentala en la caseta de seguridad.`;
+          const imageDataUrl = canvas.toDataURL('image/png');
 
-          // Intentar usar Share API si está disponible
-          if (navigator.share && navigator.canShare) {
-            try {
-              const file = new File([qrBlob], 'codigo-qr.png', { type: 'image/png' });
-              await navigator.share({
-                title: 'Código QR de Acceso',
-                text: message,
-                files: [file],
-              });
-            } catch (error: any) {
-              // Si el usuario cancela share, no mostrar error
-              if (error.name !== 'AbortError') {
-                // Fallback a WhatsApp Web sin imagen
-                const encodedMessage = encodeURIComponent(message);
-                window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
-              }
-            }
-          } else {
-            // Fallback: Descargar imagen y abrir WhatsApp
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = `codigo-qr-${selectedQr.visitorName}.png`;
-            link.click();
+          // Descargar imagen
+          const link = document.createElement('a');
+          link.href = imageDataUrl;
+          link.download = `codigo-qr-${selectedQr.visitorName}.png`;
+          link.click();
 
-            // Abrir WhatsApp con instrucciones
-            const encodedMessage = encodeURIComponent(message + '\n\n📌 La imagen del código QR se descargó. Comparte la imagen junto con este mensaje.');
+          // Abrir WhatsApp
+          const encodedMessage = encodeURIComponent(message);
+          setTimeout(() => {
             window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
-          }
+          }, 300);
+
+          toast({
+            title: "Imagen descargada",
+            description: "La imagen QR se descargó. Ahora comparte la imagen en WhatsApp.",
+          });
         });
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        throw new Error("Failed to load SVG image");
       };
 
       img.src = url;
     } catch (error) {
       console.error("Error al compartir:", error);
-      // Fallback: Compartir solo texto
       const message = `Hola, aquí está la contraseña de acceso para ${selectedQr.visitorName}:\n\n${selectedQr.accessPassword}\n\nPresentala en la caseta de seguridad.`;
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
