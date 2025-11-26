@@ -408,8 +408,109 @@ export default function AdminHome() {
               )}
             </div>
           </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Gestionar Usuarios
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {usersLoading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-12 w-full" />
+                    ))}
+                  </div>
+                ) : !allUsers || allUsers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No hay usuarios</p>
+                ) : (
+                  <div className="space-y-2">
+                    {allUsers.map((u) => (
+                      <div
+                        key={u.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                        data-testid={`user-row-${u.id}`}
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium">{u.firstName} {u.lastName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {u.username} • {u.role}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedUser(u);
+                            setNewPassword("");
+                            setShowResetPassword(true);
+                          }}
+                          data-testid={`button-reset-password-${u.id}`}
+                        >
+                          <Key className="h-4 w-4 mr-2" />
+                          Restablecer
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
+
+      <Dialog open={showResetPassword} onOpenChange={setShowResetPassword}>
+        <DialogContent data-testid="dialog-reset-password">
+          <DialogHeader>
+            <DialogTitle>Restablecer Contraseña</DialogTitle>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Usuario</p>
+                <p className="font-semibold">{selectedUser.firstName} {selectedUser.lastName}</p>
+                <p className="text-sm text-muted-foreground">{selectedUser.username}</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-password" className="text-sm font-medium">
+                  Nueva Contraseña
+                </Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Ingresa la nueva contraseña"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  data-testid="input-new-password"
+                  className="h-12"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowResetPassword(false)}
+                  className="flex-1"
+                  data-testid="button-cancel-reset"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => resetPasswordMutation.mutate(selectedUser.id)}
+                  disabled={!newPassword || resetPasswordMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-confirm-reset"
+                >
+                  {resetPasswordMutation.isPending ? "Guardando..." : "Restablecer"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
