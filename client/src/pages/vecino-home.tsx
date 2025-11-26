@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import QRCode from "qrcode";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -116,7 +117,7 @@ export default function VecinoHome() {
   };
 
   const handleShareWhatsApp = async () => {
-    if (!selectedQr?.accessPassword) {
+    if (!selectedQr?.accessPassword || !selectedQr?.code) {
       toast({
         title: "Error",
         description: "No hay contraseña disponible",
@@ -126,63 +127,25 @@ export default function VecinoHome() {
     }
 
     try {
-      // Buscar el SVG visible en el modal
-      const qrContainer = qrDisplayRef.current;
-      const svgElement = qrContainer?.querySelector('svg') as SVGElement;
-      
-      if (!svgElement) {
-        throw new Error("QR no encontrado");
-      }
-
-      // Obtener dimensiones del SVG
-      const svgRect = svgElement.getBoundingClientRect();
-      const size = Math.max(svgRect.width, svgRect.height, 120);
-
-      // Crear canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) throw new Error("Canvas context no disponible");
-
-      // Fondo blanco
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, size, size);
-
-      // Serializar SVG
-      const svgString = new XMLSerializer().serializeToString(svgElement);
-      const img = new Image();
-      const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => {
-          try {
-            ctx.drawImage(img, 0, 0);
-            URL.revokeObjectURL(url);
-            resolve();
-          } catch (err) {
-            reject(err);
-          }
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(url);
-          reject(new Error("Error cargando imagen"));
-        };
-        img.src = url;
+      // Generar imagen PNG del QR
+      const qrImageUrl = await QRCode.toDataURL(selectedQr.code, {
+        errorCorrectionLevel: 'H',
+        type: 'image/png',
+        width: 300,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
       });
 
-      // Convertir canvas a PNG
-      const pngUrl = canvas.toDataURL('image/png');
-      
-      // Descargar
-      const downloadLink = document.createElement('a');
-      downloadLink.href = pngUrl;
-      downloadLink.download = `codigo-qr-${selectedQr.visitorName}.png`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
+      // Descargar la imagen
+      const link = document.createElement('a');
+      link.href = qrImageUrl;
+      link.download = `codigo-qr-${selectedQr.visitorName}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       // Abrir WhatsApp con mensaje
       const message = `Hola, aquí está la contraseña de acceso para ${selectedQr.visitorName}:\n\n${selectedQr.accessPassword}\n\nPresentala en la caseta de seguridad.`;
@@ -201,14 +164,9 @@ export default function VecinoHome() {
       console.error("Error al compartir:", error);
       toast({
         title: "Error",
-        description: "No se pudo descargar la imagen. Abre WhatsApp manualmente.",
+        description: "No se pudo descargar la imagen.",
         variant: "destructive",
       });
-      
-      // Fallback a solo texto
-      const message = `Hola, aquí está la contraseña de acceso para ${selectedQr.visitorName}:\n\n${selectedQr.accessPassword}\n\nPresentala en la caseta de seguridad.`;
-      const encodedMessage = encodeURIComponent(message);
-      window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
     }
   };
 
