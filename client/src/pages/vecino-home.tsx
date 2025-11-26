@@ -403,7 +403,6 @@ export default function VecinoHome() {
             <DialogTitle className="text-2xl font-bold">
               Código QR Ampliado
             </DialogTitle>
-            <p className="text-xs text-muted-foreground mt-2">Toca fuera para cerrar</p>
           </DialogHeader>
           {selectedQr && (
             <div className="flex flex-col items-center gap-4 sm:gap-6 w-full pb-4">
