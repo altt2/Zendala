@@ -29,6 +29,7 @@ export default function VecinoHome() {
   const [description, setDescription] = useState("");
   const [selectedQr, setSelectedQr] = useState<QrCode | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [showFullQR, setShowFullQR] = useState(false);
   const qrDisplayRef = useRef<HTMLDivElement>(null);
 
 
@@ -117,101 +118,7 @@ export default function VecinoHome() {
   };
 
   const handleDownloadQR = () => {
-    if (!selectedQr?.code || !selectedQr?.visitorName) {
-      toast({
-        title: "Error",
-        description: "No hay código QR disponible",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Buscar el SVG visible en la página
-      const svgElement = qrDisplayRef.current?.querySelector('svg') as SVGElement;
-      if (!svgElement) {
-        console.log("SVG no encontrado, usando librería QRCode");
-        // Fallback a la librería
-        generateAndDownloadFromLibrary(selectedQr);
-        return;
-      }
-
-      // Convertir SVG a PNG
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error("Canvas no disponible");
-
-      const rect = svgElement.getBoundingClientRect();
-      const size = Math.max(rect.width, rect.height, 200);
-      
-      canvas.width = size;
-      canvas.height = size;
-      
-      // Fondo blanco
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, size, size);
-
-      const svgString = new XMLSerializer().serializeToString(svgElement);
-      const blob = new Blob([svgString], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-      
-      const img = new Image();
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0);
-        URL.revokeObjectURL(url);
-        
-        // Descargar
-        canvas.toBlob((pngBlob) => {
-          if (!pngBlob) return;
-          const downloadUrl = URL.createObjectURL(pngBlob);
-          const link = document.createElement('a');
-          link.href = downloadUrl;
-          link.download = `codigo-qr-${selectedQr.visitorName}.png`;
-          link.click();
-          URL.revokeObjectURL(downloadUrl);
-          
-          toast({
-            title: "Descargado",
-            description: "Imagen descargada correctamente.",
-          });
-        });
-      };
-      
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        generateAndDownloadFromLibrary(selectedQr);
-      };
-      
-      img.src = url;
-    } catch (error) {
-      console.error("Error:", error);
-      generateAndDownloadFromLibrary(selectedQr);
-    }
-  };
-
-  const generateAndDownloadFromLibrary = (qr: QrCode) => {
-    QRCode.toDataURL(qr.code, {
-      errorCorrectionLevel: 'H',
-      type: 'image/png',
-      width: 300,
-      margin: 1,
-      color: { dark: '#000000', light: '#ffffff' }
-    }).then((dataUrl) => {
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `codigo-qr-${qr.visitorName}.png`;
-      link.click();
-      toast({
-        title: "Descargado",
-        description: "Imagen descargada correctamente.",
-      });
-    }).catch(() => {
-      toast({
-        title: "Error",
-        description: "No se pudo descargar la imagen.",
-        variant: "destructive",
-      });
-    });
+    setShowFullQR(true);
   };
 
   const getStatusBadge = (qr: QrCode) => {
@@ -407,7 +314,7 @@ export default function VecinoHome() {
                   </p>
                 </div>
               )}
-              <div className="flex justify-center bg-white p-4 rounded-lg">
+              <div className="flex justify-center bg-white p-4 rounded-lg" ref={qrDisplayRef}>
                 <QRCodeSVG value={selectedQr.code} size={180} data-testid="qr-code-display" />
               </div>
               <div className="space-y-2">
@@ -458,7 +365,7 @@ export default function VecinoHome() {
                           data-testid="button-download-qr"
                         >
                           <Download className="h-4 w-4 mr-2" />
-                          Descargar
+                          Ver Grande
                         </Button>
                       </div>
                     </div>
@@ -485,6 +392,32 @@ export default function VecinoHome() {
                   {getStatusBadge(selectedQr)}
                 </div>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showFullQR} onOpenChange={setShowFullQR}>
+        <DialogContent className="max-w-2xl w-full flex flex-col items-center justify-center p-8" data-testid="dialog-full-qr">
+          <DialogHeader className="w-full text-center mb-4">
+            <DialogTitle className="text-2xl font-bold">
+              Código QR Ampliado
+            </DialogTitle>
+          </DialogHeader>
+          {selectedQr && (
+            <div className="flex flex-col items-center gap-6 w-full">
+              <div className="bg-white p-8 rounded-lg">
+                <QRCodeSVG value={selectedQr.code} size={400} data-testid="qr-full-display" />
+              </div>
+              <div className="text-center space-y-2">
+                <p className="text-sm text-muted-foreground">Contraseña de Acceso</p>
+                <p className="text-4xl font-bold font-mono text-primary">
+                  {selectedQr.accessPassword}
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground text-center max-w-sm">
+                Puedes capturar esta pantalla, escanear el código QR o comunicar la contraseña al guardia.
+              </p>
             </div>
           )}
         </DialogContent>
