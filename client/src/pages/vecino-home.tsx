@@ -157,9 +157,15 @@ export default function VecinoHome() {
         description: "Imagen descargada y mensaje copiado. Abre WhatsApp para compartir.",
       });
 
-      // Abrir WhatsApp Web
+      // Abrir WhatsApp App
       setTimeout(() => {
-        window.open(`https://web.whatsapp.com/`, "_blank");
+        // Intentar abrir la app de WhatsApp primero
+        window.location.href = 'whatsapp://send?text=' + encodeURIComponent(message);
+        
+        // Si no abre la app en 2 segundos, abrir wa.me
+        setTimeout(() => {
+          window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+        }, 2000);
       }, 500);
 
     } catch (error) {
