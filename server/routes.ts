@@ -6,7 +6,7 @@ import { insertQrCodeSchema, insertAccessLogSchema } from "@shared/schema";
 import type { RequestHandler } from "express";
 
 const isAdmin: RequestHandler = async (req: any, res, next) => {
-  const userId = req.user?.claims?.sub;
+  const userId = req.user?.claims?.sub || req.user?.id;
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -20,7 +20,7 @@ const isAdmin: RequestHandler = async (req: any, res, next) => {
 };
 
 const isVecinoOrAdmin: RequestHandler = async (req: any, res, next) => {
-  const userId = req.user?.claims?.sub;
+  const userId = req.user?.claims?.sub || req.user?.id;
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -34,7 +34,7 @@ const isVecinoOrAdmin: RequestHandler = async (req: any, res, next) => {
 };
 
 const isGuardOrAdmin: RequestHandler = async (req: any, res, next) => {
-  const userId = req.user?.claims?.sub;
+  const userId = req.user?.claims?.sub || req.user?.id;
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
