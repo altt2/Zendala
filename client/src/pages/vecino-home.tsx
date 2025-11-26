@@ -116,8 +116,8 @@ export default function VecinoHome() {
     });
   };
 
-  const handleDownloadQR = async () => {
-    if (!selectedQr?.code) {
+  const handleDownloadQR = () => {
+    if (!selectedQr?.code || !selectedQr?.visitorName) {
       toast({
         title: "Error",
         description: "No hay código QR disponible",
@@ -127,41 +127,91 @@ export default function VecinoHome() {
     }
 
     try {
+      // Buscar el SVG visible en la página
+      const svgElement = qrDisplayRef.current?.querySelector('svg') as SVGElement;
+      if (!svgElement) {
+        console.log("SVG no encontrado, usando librería QRCode");
+        // Fallback a la librería
+        generateAndDownloadFromLibrary(selectedQr);
+        return;
+      }
+
+      // Convertir SVG a PNG
       const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error("Canvas no disponible");
+
+      const rect = svgElement.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height, 200);
       
-      await QRCode.toCanvas(canvas, selectedQr.code, {
-        errorCorrectionLevel: 'H',
-        width: 300,
-        margin: 1,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        }
-      });
+      canvas.width = size;
+      canvas.height = size;
+      
+      // Fondo blanco
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, size, size);
 
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `codigo-qr-${selectedQr.visitorName}.png`;
-        link.click();
+      const svgString = new XMLSerializer().serializeToString(svgElement);
+      const blob = new Blob([svgString], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(url);
-
-        toast({
-          title: "Descargado",
-          description: "Imagen del código QR descargada.",
+        
+        // Descargar
+        canvas.toBlob((pngBlob) => {
+          if (!pngBlob) return;
+          const downloadUrl = URL.createObjectURL(pngBlob);
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = `codigo-qr-${selectedQr.visitorName}.png`;
+          link.click();
+          URL.revokeObjectURL(downloadUrl);
+          
+          toast({
+            title: "Descargado",
+            description: "Imagen descargada correctamente.",
+          });
         });
-      });
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        generateAndDownloadFromLibrary(selectedQr);
+      };
+      
+      img.src = url;
     } catch (error) {
-      console.error("Error al descargar:", error);
+      console.error("Error:", error);
+      generateAndDownloadFromLibrary(selectedQr);
+    }
+  };
+
+  const generateAndDownloadFromLibrary = (qr: QrCode) => {
+    QRCode.toDataURL(qr.code, {
+      errorCorrectionLevel: 'H',
+      type: 'image/png',
+      width: 300,
+      margin: 1,
+      color: { dark: '#000000', light: '#ffffff' }
+    }).then((dataUrl) => {
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `codigo-qr-${qr.visitorName}.png`;
+      link.click();
+      toast({
+        title: "Descargado",
+        description: "Imagen descargada correctamente.",
+      });
+    }).catch(() => {
       toast({
         title: "Error",
         description: "No se pudo descargar la imagen.",
         variant: "destructive",
       });
-    }
+    });
   };
 
   const getStatusBadge = (qr: QrCode) => {
