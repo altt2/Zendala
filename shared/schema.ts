@@ -32,6 +32,7 @@ export type User = typeof users.$inferSelect;
 export const qrCodes = pgTable("qr_codes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   code: varchar("code").notNull().unique(),
+  accessPassword: varchar("access_password").notNull().unique(),
   visitorName: varchar("visitor_name").notNull(),
   visitorType: varchar("visitor_type", { length: 50 }).notNull(),
   description: text("description"),
@@ -44,6 +45,7 @@ export const qrCodes = pgTable("qr_codes", {
 export const insertQrCodeSchema = createInsertSchema(qrCodes).omit({
   id: true,
   code: true,
+  accessPassword: true,
   createdById: true,
   isUsed: true,
   usedAt: true,
