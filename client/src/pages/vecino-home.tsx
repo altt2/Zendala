@@ -141,29 +141,7 @@ export default function VecinoHome() {
         }
       });
 
-      // Convertir data URL a blob
-      const response = await fetch(qrImageUrl);
-      const blob = await response.blob();
-      const file = new File([blob], `codigo-qr-${selectedQr.visitorName}.png`, { type: 'image/png' });
-
-      // Intentar usar Web Share API (funciona mejor en móvil)
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            title: 'Código QR de Acceso',
-            text: message,
-            files: [file],
-          });
-          return;
-        } catch (error: any) {
-          if (error.name === 'AbortError') {
-            return; // Usuario canceló
-          }
-          // Continuar con fallback
-        }
-      }
-
-      // Fallback: Descargar imagen y abrir WhatsApp
+      // Descargar imagen
       const link = document.createElement('a');
       link.href = qrImageUrl;
       link.download = `codigo-qr-${selectedQr.visitorName}.png`;
@@ -171,21 +149,24 @@ export default function VecinoHome() {
       link.click();
       document.body.removeChild(link);
 
+      // Copiar mensaje al portapapeles
+      await navigator.clipboard.writeText(message);
+
       toast({
-        title: "Imagen descargada",
-        description: "La imagen del QR se descargó. Abre WhatsApp y comparte la imagen manualmente.",
+        title: "¡Listo!",
+        description: "Imagen descargada y mensaje copiado. Abre WhatsApp para compartir.",
       });
 
-      // Abrir WhatsApp
+      // Abrir WhatsApp Web
       setTimeout(() => {
-        window.open(`https://wa.me`, "_blank");
-      }, 1000);
+        window.open(`https://web.whatsapp.com/`, "_blank");
+      }, 500);
 
     } catch (error) {
       console.error("Error al compartir:", error);
       toast({
         title: "Error",
-        description: "No se pudo procesar la imagen.",
+        description: "No se pudo procesar. Intenta de nuevo.",
         variant: "destructive",
       });
     }
