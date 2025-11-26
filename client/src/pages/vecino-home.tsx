@@ -289,14 +289,14 @@ export default function VecinoHome() {
       </main>
 
       <Dialog open={!!selectedQr} onOpenChange={(open) => !open && setSelectedQr(null)}>
-        <DialogContent className="max-w-md" data-testid="dialog-qr-details">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" data-testid="dialog-qr-details">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">
               {selectedQr?.isUsed === "true" ? "Código Usado" : "Código QR Activo"}
             </DialogTitle>
           </DialogHeader>
           {selectedQr && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {selectedQr.isUsed === "true" && (
                 <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-md p-4">
                   <p className="text-sm text-yellow-800 dark:text-yellow-200 font-semibold">
@@ -307,30 +307,30 @@ export default function VecinoHome() {
                   </p>
                 </div>
               )}
-              <div className="flex justify-center bg-white p-8 rounded-lg">
-                <QRCodeSVG value={selectedQr.code} size={256} data-testid="qr-code-display" />
+              <div className="flex justify-center bg-white p-4 rounded-lg">
+                <QRCodeSVG value={selectedQr.code} size={180} data-testid="qr-code-display" />
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div>
-                  <p className="text-sm text-muted-foreground">Nombre</p>
-                  <p className="text-lg font-semibold" data-testid="text-qr-visitor-name">{selectedQr.visitorName}</p>
+                  <p className="text-xs text-muted-foreground">Nombre</p>
+                  <p className="text-base font-semibold" data-testid="text-qr-visitor-name">{selectedQr.visitorName}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Tipo</p>
-                  <p className="text-base capitalize" data-testid="text-qr-visitor-type">{selectedQr.visitorType}</p>
+                  <p className="text-xs text-muted-foreground">Tipo</p>
+                  <p className="text-sm capitalize" data-testid="text-qr-visitor-type">{selectedQr.visitorType}</p>
                 </div>
                 {selectedQr.description && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Descripción</p>
-                    <p className="text-base" data-testid="text-qr-description">{selectedQr.description}</p>
+                    <p className="text-xs text-muted-foreground">Descripción</p>
+                    <p className="text-sm" data-testid="text-qr-description">{selectedQr.description}</p>
                   </div>
                 )}
                 {selectedQr.isUsed !== "true" && (
-                  <div className="space-y-4 border-t pt-4">
+                  <div className="space-y-3 border-t pt-3">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-3">Contraseña de Acceso</p>
-                      <div className="bg-primary/10 p-6 rounded-lg text-center">
-                        <p className="text-4xl font-bold font-mono tracking-wider text-primary" data-testid="text-access-password">
+                      <p className="text-xs text-muted-foreground mb-2">Contraseña de Acceso</p>
+                      <div className="bg-primary/10 p-4 rounded-lg text-center">
+                        <p className="text-3xl font-bold font-mono tracking-wider text-primary" data-testid="text-access-password">
                           {selectedQr.accessPassword}
                         </p>
                       </div>
@@ -342,7 +342,8 @@ export default function VecinoHome() {
                             description: selectedQr.accessPassword,
                           });
                         }}
-                        className="w-full mt-3"
+                        className="w-full mt-2"
+                        size="sm"
                         data-testid="button-copy-password"
                       >
                         <Copy className="h-4 w-4 mr-2" />
@@ -350,25 +351,25 @@ export default function VecinoHome() {
                       </Button>
                     </div>
 
-                    <div className="space-y-2 border-t pt-4">
-                      <p className="text-sm text-muted-foreground">O mostrar código QR</p>
+                    <div className="space-y-2 border-t pt-3">
+                      <p className="text-xs text-muted-foreground">O código QR</p>
                       <p className="text-xs text-muted-foreground">
-                        Dile al guardia la contraseña <strong>{selectedQr.accessPassword}</strong> o muéstrale este código
+                        Dile al guardia: <strong>{selectedQr.accessPassword}</strong>
                       </p>
-                      <div className="flex justify-center bg-white p-4 rounded-lg">
-                        <QRCodeSVG value={selectedQr.code} size={200} data-testid="qr-code-display" />
+                      <div className="flex justify-center bg-white p-3 rounded-lg">
+                        <QRCodeSVG value={selectedQr.code} size={120} data-testid="qr-code-display" />
                       </div>
                     </div>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-muted-foreground">Creado</p>
-                  <p className="text-sm font-mono">
+                  <p className="text-xs text-muted-foreground">Creado</p>
+                  <p className="text-xs font-mono">
                     {new Date(selectedQr.createdAt!).toLocaleString('es-MX')}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Estado</p>
+                  <p className="text-xs text-muted-foreground">Estado</p>
                   {getStatusBadge(selectedQr)}
                 </div>
               </div>
