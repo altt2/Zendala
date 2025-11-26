@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +28,7 @@ export default function VecinoHome() {
   const [description, setDescription] = useState("");
   const [selectedQr, setSelectedQr] = useState<QrCode | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const qrRef = useRef<HTMLDivElement>(null);
 
 
   const { data: qrCodes, isLoading: codesLoading } = useQuery<QrCode[]>({
@@ -114,7 +115,7 @@ export default function VecinoHome() {
     });
   };
 
-  const handleShareWhatsApp = () => {
+  const handleShareWhatsApp = async () => {
     if (!selectedQr?.accessPassword) {
       toast({
         title: "Error",
@@ -123,9 +124,75 @@ export default function VecinoHome() {
       });
       return;
     }
-    const message = `Hola, aquí está la contraseña de acceso para ${selectedQr.visitorName}:\n\n${selectedQr.accessPassword}\n\nPresentala en la caseta de seguridad.`;
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+
+    try {
+      // Capturar el QR como imagen
+      const qrElement = qrRef.current?.querySelector('svg') as SVGElement;
+      if (!qrElement) {
+        throw new Error("No se pudo encontrar el código QR");
+      }
+
+      // Convertir SVG a canvas
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error("No se pudo crear canvas");
+
+      const svg = new XMLSerializer().serializeToString(qrElement);
+      const img = new Image();
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+
+        // Convertir canvas a blob
+        canvas.toBlob(async (qrBlob) => {
+          if (!qrBlob) return;
+
+          const message = `Hola, aquí está la contraseña de acceso para ${selectedQr.visitorName}:\n\n${selectedQr.accessPassword}\n\nPresentala en la caseta de seguridad.`;
+
+          // Intentar usar Share API si está disponible
+          if (navigator.share && navigator.canShare) {
+            try {
+              const file = new File([qrBlob], 'codigo-qr.png', { type: 'image/png' });
+              await navigator.share({
+                title: 'Código QR de Acceso',
+                text: message,
+                files: [file],
+              });
+            } catch (error: any) {
+              // Si el usuario cancela share, no mostrar error
+              if (error.name !== 'AbortError') {
+                // Fallback a WhatsApp Web sin imagen
+                const encodedMessage = encodeURIComponent(message);
+                window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+              }
+            }
+          } else {
+            // Fallback: Descargar imagen y abrir WhatsApp
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `codigo-qr-${selectedQr.visitorName}.png`;
+            link.click();
+
+            // Abrir WhatsApp con instrucciones
+            const encodedMessage = encodeURIComponent(message + '\n\n📌 La imagen del código QR se descargó. Comparte la imagen junto con este mensaje.');
+            window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+          }
+        });
+      };
+
+      img.src = url;
+    } catch (error) {
+      console.error("Error al compartir:", error);
+      // Fallback: Compartir solo texto
+      const message = `Hola, aquí está la contraseña de acceso para ${selectedQr.visitorName}:\n\n${selectedQr.accessPassword}\n\nPresentala en la caseta de seguridad.`;
+      const encodedMessage = encodeURIComponent(message);
+      window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+    }
   };
 
   const getStatusBadge = (qr: QrCode) => {
@@ -347,6 +414,9 @@ export default function VecinoHome() {
                         <p className="text-3xl font-bold font-mono tracking-wider text-primary" data-testid="text-access-password">
                           {selectedQr.accessPassword}
                         </p>
+                      </div>
+                      <div className="hidden" ref={qrRef}>
+                        <QRCodeSVG value={selectedQr.code} size={256} />
                       </div>
                       <div className="flex gap-2 mt-2">
                         <Button
