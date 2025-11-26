@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Plus, QrCode as QrCodeIcon, Copy, Check, ArrowLeft } from "lucide-react";
+import { LogOut, Plus, QrCode as QrCodeIcon, Copy, Check, ArrowLeft, MessageCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { QrCode } from "@shared/schema";
 import logoUrl from "@assets/images_1763955668403.png";
@@ -112,6 +112,20 @@ export default function VecinoHome() {
         variant: "destructive",
       });
     });
+  };
+
+  const handleShareWhatsApp = () => {
+    if (!selectedQr?.accessPassword) {
+      toast({
+        title: "Error",
+        description: "No hay contraseña disponible",
+        variant: "destructive",
+      });
+      return;
+    }
+    const message = `Hola, aquí está la contraseña de acceso para ${selectedQr.visitorName}:\n\n${selectedQr.accessPassword}\n\nPresentala en la caseta de seguridad.`;
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
   };
 
   const getStatusBadge = (qr: QrCode) => {
@@ -334,21 +348,33 @@ export default function VecinoHome() {
                           {selectedQr.accessPassword}
                         </p>
                       </div>
-                      <Button
-                        onClick={() => {
-                          navigator.clipboard.writeText(selectedQr.accessPassword);
-                          toast({
-                            title: "Contraseña copiada",
-                            description: selectedQr.accessPassword,
-                          });
-                        }}
-                        className="w-full mt-2"
-                        size="sm"
-                        data-testid="button-copy-password"
-                      >
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copiar Contraseña
-                      </Button>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedQr.accessPassword);
+                            toast({
+                              title: "Contraseña copiada",
+                              description: selectedQr.accessPassword,
+                            });
+                          }}
+                          className="flex-1"
+                          size="sm"
+                          data-testid="button-copy-password"
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copiar
+                        </Button>
+                        <Button
+                          onClick={handleShareWhatsApp}
+                          variant="outline"
+                          className="flex-1"
+                          size="sm"
+                          data-testid="button-share-whatsapp"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          WhatsApp
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="space-y-2 border-t pt-3">
