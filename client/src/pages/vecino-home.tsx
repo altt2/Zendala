@@ -326,33 +326,38 @@ export default function VecinoHome() {
                   </div>
                 )}
                 {selectedQr.isUsed !== "true" && (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Código para el Guardia</p>
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Copia este código y pásalo al guardia en la caseta
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-muted p-3 rounded-md border border-muted-foreground/20">
-                        <code 
-                          className="text-xs font-mono break-all"
-                          data-testid="text-qr-code-value"
-                        >
-                          {selectedQr.code || "ERROR: Sin código"}
-                        </code>
+                  <div className="space-y-4 border-t pt-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-3">Contraseña de Acceso</p>
+                      <div className="bg-primary/10 p-6 rounded-lg text-center">
+                        <p className="text-4xl font-bold font-mono tracking-wider text-primary" data-testid="text-access-password">
+                          {selectedQr.accessPassword}
+                        </p>
                       </div>
-                      <Button 
-                        size="icon" 
-                        onClick={handleCopyCode}
-                        data-testid="button-copy-code"
-                        className="flex-shrink-0"
-                        title="Copiar código"
+                      <Button
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedQr.accessPassword);
+                          toast({
+                            title: "Contraseña copiada",
+                            description: selectedQr.accessPassword,
+                          });
+                        }}
+                        className="w-full mt-3"
+                        data-testid="button-copy-password"
                       >
-                        {copiedCode ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar Contraseña
                       </Button>
+                    </div>
+
+                    <div className="space-y-2 border-t pt-4">
+                      <p className="text-sm text-muted-foreground">O mostrar código QR</p>
+                      <p className="text-xs text-muted-foreground">
+                        Dile al guardia la contraseña <strong>{selectedQr.accessPassword}</strong> o muéstrale este código
+                      </p>
+                      <div className="flex justify-center bg-white p-4 rounded-lg">
+                        <QRCodeSVG value={selectedQr.code} size={200} data-testid="qr-code-display" />
+                      </div>
                     </div>
                   </div>
                 )}
