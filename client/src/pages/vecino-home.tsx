@@ -127,9 +127,10 @@ export default function VecinoHome() {
     }
 
     try {
-      const qrImageUrl = await QRCode.toDataURL(selectedQr.code, {
+      const canvas = document.createElement('canvas');
+      
+      await QRCode.toCanvas(canvas, selectedQr.code, {
         errorCorrectionLevel: 'H',
-        type: 'image/png',
         width: 300,
         margin: 1,
         color: {
@@ -138,16 +139,20 @@ export default function VecinoHome() {
         }
       });
 
-      const link = document.createElement('a');
-      link.href = qrImageUrl;
-      link.download = `codigo-qr-${selectedQr.visitorName}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `codigo-qr-${selectedQr.visitorName}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
 
-      toast({
-        title: "Descargado",
-        description: "Imagen del código QR descargada.",
+        toast({
+          title: "Descargado",
+          description: "Imagen del código QR descargada.",
+        });
       });
     } catch (error) {
       console.error("Error al descargar:", error);
