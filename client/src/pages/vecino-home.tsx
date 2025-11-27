@@ -122,7 +122,10 @@ export default function VecinoHome() {
   };
 
   const getStatusBadge = (qr: QrCode) => {
-    if (qr.isUsed === "true") {
+    if (qr.isUsed === "expired") {
+      return <Badge variant="destructive">Caducado</Badge>;
+    }
+    if (qr.isUsed === "used") {
       return <Badge variant="secondary" className="px-3 py-1 text-xs font-semibold" data-testid={`badge-status-${qr.id}`}>Usado</Badge>;
     }
     return <Badge className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-xs font-semibold" data-testid={`badge-status-${qr.id}`}>Activo</Badge>;

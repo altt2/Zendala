@@ -37,8 +37,9 @@ export const qrCodes = pgTable("qr_codes", {
   visitorType: varchar("visitor_type", { length: 50 }).notNull(),
   description: text("description"),
   createdById: varchar("created_by_id").notNull().references(() => users.id),
-  isUsed: varchar("is_used").notNull().default("false"),
+  isUsed: varchar("is_used").notNull().default("unused"),
   usedAt: timestamp("used_at"),
+  expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

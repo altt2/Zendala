@@ -26,6 +26,7 @@ export interface IStorage {
   getQrCodeByCode(code: string): Promise<QrCode | undefined>;
   getQrCodeByPassword(password: string): Promise<QrCode | undefined>;
   updateQrCodeUsed(id: string): Promise<void>;
+  markQrCodeAsExpired(id: string): Promise<void>;
   createAccessLog(log: InsertAccessLog): Promise<AccessLog>;
   getAllAccessLogs(): Promise<any[]>;
   getDashboardStats(): Promise<any>;
@@ -127,9 +128,10 @@ export class DatabaseStorage implements IStorage {
   async createQrCode(qrCodeData: InsertQrCode): Promise<QrCode> {
     const code = randomUUID();
     const accessPassword = this.generateAccessPassword();
+    const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12 hours from now
     const [qrCode] = await db
       .insert(qrCodes)
-      .values({ ...qrCodeData, code, accessPassword })
+      .values({ ...qrCodeData, code, accessPassword, expiresAt })
       .returning();
     return qrCode;
   }
@@ -161,7 +163,14 @@ export class DatabaseStorage implements IStorage {
   async updateQrCodeUsed(id: string): Promise<void> {
     await db
       .update(qrCodes)
-      .set({ isUsed: "true", usedAt: new Date() })
+      .set({ isUsed: "used", usedAt: new Date() })
+      .where(eq(qrCodes.id, id));
+  }
+
+  async markQrCodeAsExpired(id: string): Promise<void> {
+    await db
+      .update(qrCodes)
+      .set({ isUsed: "expired" })
       .where(eq(qrCodes.id, id));
   }
 
@@ -238,14 +247,14 @@ export class DatabaseStorage implements IStorage {
     const [activeCodesResult] = await db
       .select({ count: sql<number>`cast(count(*) as integer)` })
       .from(qrCodes)
-      .where(eq(qrCodes.isUsed, "false"));
+      .where(eq(qrCodes.isUsed, "unused"));
 
     const [usedThisWeekResult] = await db
       .select({ count: sql<number>`cast(count(*) as integer)` })
       .from(qrCodes)
       .where(
         and(
-          eq(qrCodes.isUsed, "true"),
+          eq(qrCodes.isUsed, "used"),
           gte(qrCodes.usedAt, weekAgo)
         )
       );
