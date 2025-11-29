@@ -12,9 +12,16 @@ import { storage } from "./storage";
 
 const getOidcConfig = memoize(
   async () => {
+    const replId = process.env.REPL_ID;
+    if (!replId) {
+      throw new Error(
+        'REPL_ID environment variable is not set. This is required for Replit authentication. ' +
+        'Make sure you are running this on Replit with the proper environment variables configured.'
+      );
+    }
     return await client.discovery(
       new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
+      replId
     );
   },
   { maxAge: 3600 * 1000 }
@@ -70,7 +77,14 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  const config = await getOidcConfig();
+  let config: any;
+  try {
+    config = await getOidcConfig();
+  } catch (error) {
+    console.warn('⚠️ Warning: Replit OIDC not configured. OAuth login will not work.');
+    console.warn('This is normal for local development. Use local login instead.');
+    config = null;
+  }
 
   // Local strategy for username/password authentication
   passport.use(
@@ -164,6 +178,9 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/login", (req, res, next) => {
+    if (!config) {
+      return res.status(503).json({ message: "Replit OAuth not configured. Use local login instead." });
+    }
     ensureStrategy(req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
@@ -172,6 +189,9 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    if (!config) {
+      return res.status(503).json({ message: "Replit OAuth not configured." });
+    }
     ensureStrategy(req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`, {
       successRedirect: "/role-selection",
@@ -181,9 +201,12 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
+      if (!config || !process.env.REPL_ID) {
+        return res.redirect("/");
+      }
       res.redirect(
         client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
+          client_id: process.env.REPL_ID,
           post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
         }).href
       );
