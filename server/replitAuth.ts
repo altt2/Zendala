@@ -98,23 +98,29 @@ export async function setupAuth(app: Express) {
       },
       async (username, password, done) => {
         try {
+          console.log('🔐 Local auth attempt:', username);
           const user = await storage.getUserByUsername(username);
           if (!user) {
+            console.log('❌ User not found:', username);
             return done(null, false, { message: "Usuario no encontrado" });
           }
 
           if (!user.passwordHash) {
+            console.log('❌ User has no password hash:', username);
             return done(null, false, { message: "Usuario no válido" });
           }
 
           // Hash the provided password and compare
           const passwordHash = createHash("sha256").update(password).digest("hex");
           if (passwordHash !== user.passwordHash) {
+            console.log('❌ Wrong password for user:', username);
             return done(null, false, { message: "Contraseña incorrecta" });
           }
 
+          console.log('✅ User authenticated:', username);
           return done(null, { id: user.id, username: user.username, role: user.role });
         } catch (error) {
+          console.error('🔥 Authentication error:', error);
           return done(error);
         }
       }
