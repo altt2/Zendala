@@ -177,25 +177,35 @@ export async function setupAuth(app: Express) {
 
   // Local login endpoint - returns JWT token
   app.post("/api/login-local", (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate("local", (err: any, user: any, info: any) => {
-      if (err) {
-        console.error('🔥 Login error:', err);
-        return res.status(500).json({ message: "Error during authentication", error: process.env.NODE_ENV === 'development' ? err.message : undefined });
-      }
-      if (!user) {
-        return res.status(401).json({ message: info?.message || "Authentication failed" });
-      }
+    try {
+      passport.authenticate("local", (err: any, user: any, info: any) => {
+        try {
+          if (err) {
+            console.error('🔥 Login error:', err);
+            return res.status(500).json({ message: "Error during authentication", error: process.env.NODE_ENV === 'development' ? err.message : undefined });
+          }
+          if (!user) {
+            return res.status(401).json({ message: info?.message || "Authentication failed" });
+          }
 
-      // Generate JWT token instead of using sessions
-      const token = generateJWT(user.id, user.username, user.role);
-      
-      res.json({
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        token: token, // Include JWT token in response
-      });
-    })(req, res, next);
+          // Generate JWT token instead of using sessions
+          const token = generateJWT(user.id, user.username, user.role);
+          
+          return res.json({
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            token: token, // Include JWT token in response
+          });
+        } catch (innerErr) {
+          console.error('🔥 Error in login callback:', innerErr);
+          return res.status(500).json({ message: "Internal server error" });
+        }
+      })(req, res, next);
+    } catch (outerErr) {
+      console.error('🔥 Unexpected error in login route:', outerErr);
+      return res.status(500).json({ message: "Internal server error" });
+    }
   });
 
   app.get("/api/login", (req: Request, res: Response, next: NextFunction) => {
