@@ -7,7 +7,6 @@ import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
-import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
 const getOidcConfig = memoize(
@@ -29,25 +28,26 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000;
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
+  
+  // Validate DATABASE_URL
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL environment variable is not set');
+  }
+  
+  console.log('📊 Initializing session with MemoryStore');
   
   const sessionSecret = process.env.SESSION_SECRET || 'development-secret-key-change-in-production';
   
   return session({
     secret: sessionSecret,
-    store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
+      sameSite: 'lax',
     },
   });
 }
@@ -167,7 +167,8 @@ export async function setupAuth(app: Express) {
   app.post("/api/login-local", (req, res, next) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
-        return res.status(500).json({ message: "Error during authentication" });
+        console.error('🔥 Login error:', err);
+        return res.status(500).json({ message: "Error during authentication", error: process.env.NODE_ENV === 'development' ? err.message : undefined });
       }
       if (!user) {
         return res.status(401).json({ message: info?.message || "Authentication failed" });
@@ -175,7 +176,8 @@ export async function setupAuth(app: Express) {
 
       req.logIn(user, (err) => {
         if (err) {
-          return res.status(500).json({ message: "Error logging in" });
+          console.error('🔥 Login session error:', err);
+          return res.status(500).json({ message: "Error logging in", error: process.env.NODE_ENV === 'development' ? err.message : undefined });
         }
         res.json({
           id: user.id,
