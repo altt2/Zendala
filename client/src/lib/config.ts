@@ -5,7 +5,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (typeof window !== 'undefined' && window.location.origin !== 'file://' 
     ? '' // Use relative URLs when served from same origin
-    : 'https://zendala-production.onrender.com'); // Use absolute URL for APK/file:// protocol
+    : 'https://zendala.onrender.com'); // Use absolute URL for APK/file:// protocol
 
 export function getApiUrl(path: string): string {
   // Ensure path starts with /
