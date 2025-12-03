@@ -13,4 +13,32 @@ export function getApiUrl(path: string): string {
   return `${API_BASE_URL}${normalizedPath}`;
 }
 
+// Token management
+const TOKEN_KEY = 'auth_token';
+
+export function getAuthToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    // localStorage might not be available in some contexts
+    return null;
+  }
+}
+
+export function setAuthToken(token: string): void {
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    console.warn('Could not save auth token');
+  }
+}
+
+export function clearAuthToken(): void {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    console.warn('Could not clear auth token');
+  }
+}
+
 export { API_BASE_URL };

@@ -1,13 +1,14 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { getApiUrl } from "./config";
+import { getApiUrl, getAuthToken, setAuthToken, clearAuthToken } from "./config";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     
     if (res.status === 401) {
+      clearAuthToken();
       setTimeout(() => {
-        window.location.href = getApiUrl("/login");
+        window.location.href = getApiUrl("/");
       }, 100);
     }
     
@@ -23,11 +24,18 @@ export async function apiRequest(
   // Convert relative URLs to absolute if needed
   const fullUrl = url.startsWith('http') ? url : getApiUrl(url);
   
+  const headers: HeadersInit = data ? { "Content-Type": "application/json" } : {};
+  
+  // Add JWT token to Authorization header if available
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
   await throwIfResNotOk(res);
@@ -44,11 +52,20 @@ export const getQueryFn: <T>(options: {
     const path = (queryKey as Array<string | number>).join("/");
     const url = getApiUrl(path as string);
     
+    const headers: HeadersInit = {};
+    
+    // Add JWT token to Authorization header if available
+    const token = getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(url, {
-      credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+      clearAuthToken();
       return null;
     }
 

@@ -2,6 +2,7 @@ import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
 import LocalStrategy from "passport-local";
 import { createHash } from "crypto";
+import jwt from "jsonwebtoken";
 
 import passport from "passport";
 import session from "express-session";
@@ -25,6 +26,17 @@ const getOidcConfig = memoize(
   },
   { maxAge: 3600 * 1000 }
 );
+
+// Generate JWT token for local auth
+function generateJWT(userId: string, username: string, role: string): string {
+  const jwtSecret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+  const token = jwt.sign(
+    { id: userId, username, role },
+    jwtSecret,
+    { expiresIn: '7d' }
+  );
+  return token;
+}
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000;
@@ -163,7 +175,7 @@ export async function setupAuth(app: Express) {
     cb(null, user);
   });
 
-  // Local login endpoint
+  // Local login endpoint - returns JWT token
   app.post("/api/login-local", (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
@@ -174,16 +186,14 @@ export async function setupAuth(app: Express) {
         return res.status(401).json({ message: info?.message || "Authentication failed" });
       }
 
-      req.logIn(user, (err: any) => {
-        if (err) {
-          console.error('🔥 Login session error:', err);
-          return res.status(500).json({ message: "Error logging in", error: process.env.NODE_ENV === 'development' ? err.message : undefined });
-        }
-        res.json({
-          id: user.id,
-          username: user.username,
-          role: user.role,
-        });
+      // Generate JWT token instead of using sessions
+      const token = generateJWT(user.id, user.username, user.role);
+      
+      res.json({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        token: token, // Include JWT token in response
       });
     })(req, res, next);
   });
@@ -226,7 +236,24 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
+  // First check for JWT token in Authorization header (for mobile/API clients)
+  const authHeader = (req as any).headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    try {
+      const jwtSecret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+      const decoded = jwt.verify(token, jwtSecret) as any;
+      // Attach user info to request for downstream handlers
+      (req as any).user = { id: decoded.id, username: decoded.username, role: decoded.role };
+      return next();
+    } catch (error) {
+      console.error('JWT verification failed:', error);
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+  }
+
+  // Fallback to session-based auth (for web/OAuth)
+  const user = (req as any).user as any;
 
   if (!req.isAuthenticated() || (!user?.expires_at && !user?.id)) {
     return res.status(401).json({ message: "Unauthorized" });
