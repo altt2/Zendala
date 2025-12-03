@@ -221,7 +221,20 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/logout", (req: Request, res: Response) => {
-    req.logout(() => {
+    // For JWT-based auth, client handles token removal
+    // For session-based auth (OIDC), we use req.logout
+    req.logout((err) => {
+      if (err) {
+        console.error('Logout error:', err);
+      }
+      
+      // For mobile/API clients, just return success JSON
+      // Client will handle removing JWT token from localStorage
+      if (req.headers['accept'] === 'application/json' || req.headers['content-type']?.includes('application/json')) {
+        return res.json({ message: "Logged out successfully" });
+      }
+      
+      // For web browser clients with OIDC
       if (!config || !process.env.REPL_ID) {
         return res.redirect("/");
       }

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getApiUrl, clearAuthToken } from "@/lib/config";
 import { 
   LogOut, 
   QrCode as QrCodeIcon, 
@@ -137,7 +138,15 @@ export default function AdminHome() {
           </div>
           <Button 
             variant="outline" 
-            onClick={() => window.location.href = "/api/logout"}
+            onClick={async () => {
+              try {
+                await fetch(getApiUrl("/api/logout"), { method: "GET" });
+              } catch (error) {
+                console.error("Logout request failed:", error);
+              }
+              clearAuthToken();
+              window.location.href = "/";
+            }}
             data-testid="button-logout"
           >
             <LogOut className="h-4 w-4 mr-2" />

@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { getApiUrl, clearAuthToken } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -327,7 +328,15 @@ export default function GuardiaHome() {
             )}
             <Button 
               variant="outline" 
-              onClick={() => window.location.href = "/api/logout"}
+              onClick={async () => {
+                try {
+                  await fetch(getApiUrl("/api/logout"), { method: "GET" });
+                } catch (error) {
+                  console.error("Logout request failed:", error);
+                }
+                clearAuthToken();
+                window.location.href = "/";
+              }}
               data-testid="button-logout"
             >
               <LogOut className="h-4 w-4 mr-2" />
