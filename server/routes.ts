@@ -149,6 +149,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple test endpoints for debugging
+  app.get("/api/test", (req, res) => {
+    res.json({ message: "Server is working", timestamp: new Date().toISOString() });
+  });
+
+  // Public debug endpoint - shows last 5 QR codes (no auth required)
+  app.get("/api/test/recent-qr-codes", async (req, res) => {
+    try {
+      const allCodes = await storage.getAllQrCodes();
+      const recent = allCodes.slice(0, 5);
+      console.log(`[Debug] Returning ${recent.length} recent QR codes out of ${allCodes.length} total`);
+      res.json({
+        total: allCodes.length,
+        recent: recent.map(qr => ({
+          id: qr.id,
+          code: qr.code,
+          codeLength: qr.code ? qr.code.length : 0,
+          accessPassword: qr.accessPassword,
+          visitorName: qr.visitorName,
+          isUsed: qr.isUsed,
+          createdAt: qr.createdAt,
+        }))
+      });
+    } catch (error) {
+      console.error("[Debug] Error fetching QR codes:", error);
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
   app.post("/api/qr-codes/validate", isAuthenticated, isGuardOrAdmin, async (req: any, res) => {
     try {
       let { code, password } = req.body;
@@ -182,9 +211,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!qrCode) {
         console.log(`[QR Validation] QR not found`);
+        // Also log all QR codes in database for debugging
+        const allCodes = await storage.getAllQrCodes();
+        console.log(`[QR Validation] Available codes in database: ${allCodes.map(q => `${q.code.substring(0, 8)}...`).join(", ")}`);
         return res.json({
           valid: false,
           message: "Contraseña o código no encontrado",
+          debug: {
+            searched: { password, code },
+            availableCodes: allCodes.length
+          }
         });
       }
 
