@@ -49,6 +49,7 @@ export default function GuardiaHome() {
   const [manualCode, setManualCode] = useState("");
   const [validationResult, setValidationResult] = useState<QrValidationResult | null>(null);
   const [scanner, setScanner] = useState<Html5QrcodeScanner | null>(null);
+  const [lastDecoded, setLastDecoded] = useState<string | null>(null);
   const [showNotesDialog, setShowNotesDialog] = useState(false);
   const [accessType, setAccessType] = useState<"pie" | "vehiculo">("pie");
   const [vehiclePlates, setVehiclePlates] = useState("");
@@ -223,6 +224,7 @@ export default function GuardiaHome() {
         html5QrcodeScanner.render(
           (decodedText) => {
             console.log("QR code detected:", decodedText);
+            setLastDecoded(decodedText);
             validateQrMutation.mutate(decodedText);
           },
           (error) => {
@@ -439,6 +441,12 @@ export default function GuardiaHome() {
                 style={{ minHeight: "400px" }}
                 data-testid="qr-reader-container"
               />
+              {lastDecoded && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                  <strong>Último escaneo:</strong>
+                  <div className="font-mono break-all">{lastDecoded}</div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
