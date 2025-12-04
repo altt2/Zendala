@@ -182,30 +182,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       let { code, password } = req.body;
       let qrCode;
-      
+
       console.log(`[QR Validation] Request body:`, JSON.stringify(req.body));
-      
-      // Try to validate by password first (preferred), then by code (fallback)
-      if (password) {
+
+      // Prefer searching by code (UUID) when available (this covers scanned QR flows).
+      if (code) {
+        const codeStr = String(code).trim();
+        console.log(`[QR Validation] Searching by code: "${codeStr}"`);
+        qrCode = await storage.getQrCodeByCode(codeStr);
+        console.log(`[QR Validation] Result from code search:`, qrCode ? `Found ${qrCode.id}` : "Not found");
+      }
+
+      // If not found by code, try password (manual entry or fallback)
+      if (!qrCode && password) {
         const passwordStr = String(password).trim();
         const passwordUpperCase = passwordStr.toUpperCase();
-        
-        console.log(`[QR Validation] Received input: "${passwordStr}"`);
         console.log(`[QR Validation] Searching by password (uppercase): "${passwordUpperCase}"`);
         qrCode = await storage.getQrCodeByPassword(passwordUpperCase);
         console.log(`[QR Validation] Result from password search:`, qrCode ? `Found ${qrCode.id}` : "Not found");
-        
-        // If not found by password, try searching by code as-is (UUIDs are case-sensitive)
-        if (!qrCode) {
-          console.log(`[QR Validation] Password not found, trying as code (original case): "${passwordStr}"`);
-          qrCode = await storage.getQrCodeByCode(passwordStr);
-          console.log(`[QR Validation] Result from code search:`, qrCode ? `Found ${qrCode.id}` : "Not found");
-        }
-      } else if (code) {
-        code = String(code).trim();
-        console.log(`[QR Validation] Searching by code: "${code}"`);
-        qrCode = await storage.getQrCodeByCode(code);
-      } else {
+      }
+
+      if (!qrCode && !password && !code) {
         return res.status(400).json({ message: "Password or code is required" });
       }
 
