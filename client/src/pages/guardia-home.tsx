@@ -77,8 +77,17 @@ export default function GuardiaHome() {
 
 
   const validateQrMutation = useMutation({
-    mutationFn: async (password: string) => {
-      const res = await apiRequest("POST", "/api/qr-codes/validate", { password });
+    mutationFn: async (payload: string | { password?: string; code?: string }) => {
+      let body: { password?: string; code?: string };
+      if (typeof payload === "string") {
+        // When a plain string is passed (scanner or manual input), send it as both
+        // password and code to make validation robust to either lookup method.
+        body = { password: payload, code: payload };
+      } else {
+        body = payload;
+      }
+
+      const res = await apiRequest("POST", "/api/qr-codes/validate", body);
       return await res.json();
     },
     onSuccess: (data: QrValidationResult) => {
