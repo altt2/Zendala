@@ -75,28 +75,37 @@ jobs:
             exit 1
           fi
           echo "Found app at: $APP_PATH"
-          ABSOLUTE_APP=$(cd "$APP_PATH" && pwd)
-          echo "Absolute path: $ABSOLUTE_APP"
           
-          cd ios/App/build
-          mkdir -p Payload
-          cp -r "$ABSOLUTE_APP" Payload/App.app
-          zip -r -y App.ipa Payload/
+          # Create proper IPA structure
+          mkdir -p IPA_temp/Payload
+          cp -r "$APP_PATH" IPA_temp/Payload/App.app
+          
+          # Verify structure
+          ls -la IPA_temp/Payload/App.app/ | head -10
+          
+          # Create IPA as ZIP
+          cd IPA_temp
+          zip -r -y ../App.ipa Payload/
+          cd ..
+          
+          # Verify IPA
+          echo "✅ IPA created:"
           ls -lh App.ipa
+          unzip -l App.ipa | grep -E "Payload|App.app" | head -5
 
       - name: Upload IPA as artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Zendala-iOS
-          path: ios/App/build/App.ipa
+          path: App.ipa
           retention-days: 30
 
       - name: Create Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
         uses: softprops/action-gh-release@v1
         with:
-          files: ios/App/build/App.ipa
+          files: App.ipa
           tag_name: ios-${{ github.run_number }}
           body: |
             iOS App Build
