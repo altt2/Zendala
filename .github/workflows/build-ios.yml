@@ -100,21 +100,6 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: Zendala-iOS
+          name: Zendala-iOS-App
           path: App.ipa
           retention-days: 30
-
-      - name: Create Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
-        uses: softprops/action-gh-release@v2
-        with:
-          files: App.ipa
-          tag_name: ios-${{ github.run_number }}
-          body: |
-            iOS App Build
-            Build: ${{ github.run_number }}
-            Commit: ${{ github.sha }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
