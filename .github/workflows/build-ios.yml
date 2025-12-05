@@ -69,19 +69,22 @@ jobs:
 
       - name: Generate IPA (if app exists)
         run: |
-          APP_PATH=$(find ios/App/build -name "App.app" -type d | head -1)
+          APP_PATH=$(find ios/App/build -name "*.app" -type d | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "❌ Build failed: no App.app generated"
+            echo "❌ Build failed: no .app generated"
             exit 1
           fi
+
+          APP_NAME=$(basename "$APP_PATH")
           echo "Found app at: $APP_PATH"
+          echo "Using app bundle name: $APP_NAME"
           
-          # Create proper IPA structure
+          # Create proper IPA structure (Payload/<AppName>.app)
           mkdir -p IPA_temp/Payload
-          cp -r "$APP_PATH" IPA_temp/Payload/App.app
+          cp -r "$APP_PATH" "IPA_temp/Payload/$APP_NAME"
           
           # Verify structure
-          ls -la IPA_temp/Payload/App.app/ | head -10
+          ls -la "IPA_temp/Payload/$APP_NAME" | head -10
           
           # Create IPA as ZIP
           cd IPA_temp
@@ -91,7 +94,7 @@ jobs:
           # Verify IPA
           echo "✅ IPA created:"
           ls -lh App.ipa
-          unzip -l App.ipa | grep -E "Payload|App.app" | head -5
+          unzip -l App.ipa | grep -E "Payload|\.app" | head -5
 
       - name: Upload IPA as artifact
         if: success()
@@ -103,7 +106,7 @@ jobs:
 
       - name: Create Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: App.ipa
           tag_name: ios-${{ github.run_number }}
@@ -111,5 +114,7 @@ jobs:
             iOS App Build
             Build: ${{ github.run_number }}
             Commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
