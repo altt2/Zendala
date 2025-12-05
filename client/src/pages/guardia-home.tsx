@@ -216,7 +216,10 @@ export default function GuardiaHome() {
             fps: 10, 
             qrbox: { width: 250, height: 250 },
             aspectRatio: 1.0,
-            disableFlip: false
+            disableFlip: false,
+            // Force rear camera only, no UI options
+            facingMode: { exact: "environment" },
+            showTorchButtonIfSupported: true,
           },
           false
         );
